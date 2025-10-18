@@ -1,0 +1,32 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug kube-apiserver",
+      "type": "go",
+      "request": "launch",
+      "program": "${workspaceFolder}/cmd/kube-apiserver",
+      "args": [
+        "--etcd-servers=http://127.0.0.1:2379",
+        "--service-cluster-ip-range=10.0.0.0/24",
+        "--cert-dir=/tmp/kubernetes",
+        "--secure-port=6443",
+        "--authorization-mode=RBAC",
+        "--anonymous-auth=true",
+        "--allow-privileged=true",
+        "--runtime-config=api/all=true",
+        "--disable-admission-plugins=ServiceAccount",
+        "--service-account-key-file=${workspaceFolder}/hack/testdata/ca/ca.key",
+        "--service-account-signing-key-file=${workspaceFolder}/hack/testdata/ca/ca.key",
+        "--service-account-issuer=https://kubernetes.default.svc.cluster.local"
+      ],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "KUBECONFIG": "/tmp/kubeconfig",
+        "GOROOT": "/usr/local/go",
+        "PATH": "/usr/local/go/bin:${env:PATH}",
+        "GOTOOLCHAIN": "local"
+      }
+    }
+  ]
+}

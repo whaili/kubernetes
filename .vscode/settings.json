@@ -1,0 +1,10 @@
+{
+  "go.goroot": "/usr/local/go",
+  "go.toolsEnvVars": {
+    "GOROOT": "/usr/local/go",
+    "PATH": "/usr/local/go/bin:${env:PATH}",
+    "GOTOOLCHAIN": "local"
+  },
+  "bookmarks.useWorkspaces": true,
+  "bookmarks.saveBookmarksInProject": true
+}
