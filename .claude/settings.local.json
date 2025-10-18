@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go version)",
+      "Bash(dlv version)",
+      "Bash(go clean -cache -modcache)",
+      "Bash(go clean -i ./...)",
+      "Bash(go install github.com/go-delve/delve/cmd/dlv@latest)",
+      "Bash(make clean)",
+      "Bash(go env GOCACHE GOMODCACHE)",
+      "Bash(go mod download)",
+      "Bash(go list -f '{{.ImportPath}} {{.Standard}}' runtime)",
+      "Bash(cat /workspaces/kubernetes/go.work)",
+      "Bash(go build -x -gcflags=all=-N -l .)",
+      "Bash(go build -gcflags=all=-N -l .)",
+      "Bash(go build -gcflags='all=-N -l' -o /tmp/test-apiserver .)",
+      "Read(//go/pkg/mod/**)",
+      "Bash(go version -m /go/bin/dlv)",
+      "Bash(/usr/local/go/bin/go version)",
+      "Bash(go env GOVERSION GOROOT)",
+      "Read(//usr/local/go/bin/**)",
+      "Bash(GOTOOLCHAIN=go1.25.0 go install -a github.com/go-delve/delve/cmd/dlv@latest)",
+      "Bash(echo $GOROOT)",
+      "Bash(go env GOROOT)",
+      "Bash(go mod tidy)",
+      "Bash(GOTOOLCHAIN=go1.25.0 go install -a std)",
+      "Bash(go list -f '{{.Target}}' runtime)",
+      "Bash(xargs file)",
+      "Bash(GOTOOLCHAIN=go1.25.0 go build -gcflags='all=-N -l' -o /tmp/test-apiserver .)",
+      "Bash(source ~/.bashrc)",
+      "Bash(env)",
+      "Bash(export GOTOOLCHAIN=go1.25.0)",
+      "Bash(echo $GOTOOLCHAIN)",
+      "Bash(go env GOTOOLCHAIN)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

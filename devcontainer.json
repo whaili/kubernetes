@@ -1,0 +1,18 @@
+{
+  "name": "kubernetes-dev",
+  "image": "mcr.microsoft.com/devcontainers/go:1.25",
+  "containerEnv": {
+    "GOROOT": "/usr/local/go",
+    "PATH": "/usr/local/go/bin:/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+    "GOTOOLCHAIN": "local"
+  },
+  "settings": {
+    "go.goroot": "/usr/local/go",
+    "go.toolsEnvVars": {
+      "GOROOT": "/usr/local/go",
+      "PATH": "/usr/local/go/bin:${env:PATH}",
+      "GOTOOLCHAIN": "local"
+    }
+  }
+}
+
