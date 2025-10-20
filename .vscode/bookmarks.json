@@ -9,16 +9,6 @@
 					"label": "DefaultBuildHandlerChain:装饰者处理链构造"
 				}
 			]
-		},
-		{
-			"path": "cmd/kube-apiserver/app/server.go",
-			"bookmarks": [
-				{
-					"line": 176,
-					"column": 0,
-					"label": "CreateServerChain：构建子服务入口"
-				}
-			]
 		}
 	]
 }
