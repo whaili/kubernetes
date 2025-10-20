@@ -6,9 +6,11 @@
       "type": "go",
       "request": "launch",
       "mode": "exec",  // 关键：指定 mode 为 exec
-      "program": "${workspaceFolder}/_output/local/go/bin/kube-scheduler",
+      "program": "${workspaceFolder}/_output/local/go/bin/kube-controller-manager",
       "args": [
         "--kubeconfig=/tmp/k8s-debug/debug.kubeconfig",
+        "--service-account-private-key-file=/tmp/k8s-debug/sa.key",
+        "--leader-elect=false",
         "--v=4"
       ]
     }

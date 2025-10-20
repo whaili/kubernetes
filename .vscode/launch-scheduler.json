@@ -2,15 +2,13 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug kube-controller-manager (pre-built binary)",
+      "name": "Debug kube-scheduler (pre-built binary)",
       "type": "go",
       "request": "launch",
       "mode": "exec",  // 关键：指定 mode 为 exec
-      "program": "${workspaceFolder}/_output/local/go/bin/kube-controller-manager",
+      "program": "${workspaceFolder}/_output/local/go/bin/kube-scheduler",
       "args": [
         "--kubeconfig=/tmp/k8s-debug/debug.kubeconfig",
-        "--service-account-private-key-file=/tmp/k8s-debug/sa.key",
-        "--leader-elect=false",
         "--v=4"
       ]
     }

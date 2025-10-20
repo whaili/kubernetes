@@ -11,12 +11,62 @@
 			]
 		},
 		{
+			"path": "cmd/kube-controller-manager/app/controllermanager.go",
+			"bookmarks": [
+				{
+					"line": 246,
+					"column": 0,
+					"label": "1. controller管理器入口"
+				},
+				{
+					"line": 268,
+					"column": 0,
+					"label": "3. RunControllers()运行所有controller"
+				},
+				{
+					"line": 280,
+					"column": 0,
+					"label": "2. 触发controller"
+				},
+				{
+					"line": 714,
+					"column": 0,
+					"label": "4. 每个controller入口"
+				}
+			]
+		},
+		{
 			"path": "staging/src/k8s.io/apiserver/pkg/storage/etcd3/store.go",
 			"bookmarks": [
 				{
-					"line": 910,
+					"line": 907,
 					"column": 0,
-					"label": "getList() 底层etcd"
+					"label": "getList() etcd底层存储"
+				}
+			]
+		},
+		{
+			"path": "cmd/kube-controller-manager/app/controller_descriptor.go",
+			"bookmarks": [
+				{
+					"line": 147,
+					"column": 0,
+					"label": "NewControllerDescriptors()注册Controller描述"
+				}
+			]
+		},
+		{
+			"path": "pkg/controller/deployment/deployment_controller.go",
+			"bookmarks": [
+				{
+					"line": 180,
+					"column": 0,
+					"label": "5. DeploymentController() 启动工作协程"
+				},
+				{
+					"line": 672,
+					"column": 0,
+					"label": "6. syncDeployment()计算调整副本数"
 				}
 			]
 		}
