@@ -4,7 +4,7 @@ set -euo pipefail
 # ==========================
 # Kubernetes minimal debug control-plane
 #  Usage:
-#    $0 start [component]  # component: etcd|apiserver|controller
+#    $0 start [component]  # component: etcd|apiserver|controller|scheduler|all
 #    $0 stop [component]
 # ==========================
 
@@ -22,27 +22,27 @@ APISERVER_PID_FILE=${DEBUG_DIR}/apiserver.pid
 APISERVER_LOG=${LOG_DIR}/apiserver.log
 CONTROLLER_PID_FILE=${DEBUG_DIR}/controller-manager.pid
 CONTROLLER_LOG=${LOG_DIR}/controller-manager.log
+SCHEDULER_PID_FILE=${DEBUG_DIR}/scheduler.pid
+SCHEDULER_LOG=${LOG_DIR}/scheduler.log
 
 export KUBECONFIG=${DEBUG_DIR}/debug.kubeconfig
 
 usage() {
     echo "用法: $0 {start|stop} [component]"
-    echo "  component: etcd|apiserver|controller|all (默认 all)"
+    echo "  component: etcd|apiserver|controller|scheduler|all (默认 all)"
     exit 1
 }
 
 # --------------------------
-# 环境准备
+# 环境准备（生成证书和kubeconfig）
 # --------------------------
 prepare_env() {
     echo "===== 环境准备 ====="
     cd "${DEBUG_DIR}"
 
-    # 1. CA
-    [ -f ca.crt ] || openssl genrsa -out ca.key 2048
+    [ -f ca.key ] || openssl genrsa -out ca.key 2048
     [ -f ca.crt ] || openssl req -x509 -new -nodes -key ca.key -subj "/CN=my-debug-ca" -days 10000 -out ca.crt
 
-    # 2. server.conf
     [ -f server.conf ] || cat > server.conf <<EOF
 [req]
 distinguished_name = req_distinguished_name
@@ -60,21 +60,17 @@ IP.1 = 127.0.0.1
 IP.2 = 10.96.0.1
 EOF
 
-    # 3. apiserver server cert
     [ -f server.key ] || openssl genrsa -out server.key 2048
     [ -f server.csr ] || openssl req -new -key server.key -out server.csr -config server.conf
     [ -f server.crt ] || openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial \
         -out server.crt -days 10000 -extensions v3_req -extfile server.conf
 
-    # 4. client cert
     [ -f client.key ] || openssl genrsa -out client.key 2048
-    [ -f client.crt ] || openssl req -new -key client.key -subj "/O=system:masters/CN=kube-controller-manager" | \
+    [ -f client.crt ] || openssl req -new -key client.key -subj "/O=system:masters/CN=debug-admin" | \
         openssl x509 -req -days 10000 -CA ca.crt -CAkey ca.key -CAcreateserial -out client.crt
 
-    # 5. ServiceAccount key
     [ -f sa.key ] || openssl genrsa -out sa.key 2048
 
-    # 6. kubeconfig
     if [ ! -f debug.kubeconfig ]; then
         kubectl config set-cluster debug-cluster \
             --server=https://127.0.0.1:6443 \
@@ -95,7 +91,7 @@ EOF
 }
 
 # --------------------------
-# 启动/停止组件
+# etcd
 # --------------------------
 start_etcd() {
     if pgrep -x etcd >/dev/null 2>&1; then
@@ -122,6 +118,9 @@ stop_etcd() {
     fi
 }
 
+# --------------------------
+# kube-apiserver
+# --------------------------
 start_apiserver() {
     prepare_env
     APISERVER_BIN="${ROOT_DIR}/_output/local/go/bin/kube-apiserver"
@@ -162,8 +161,10 @@ stop_apiserver() {
     fi
 }
 
+# --------------------------
+# kube-controller-manager
+# --------------------------
 start_controller() {
-    prepare_env
     CONTROLLER_BIN="${ROOT_DIR}/_output/local/go/bin/kube-controller-manager"
     if [ ! -f "${CONTROLLER_BIN}" ]; then
         echo "❌ 找不到 kube-controller-manager，请先 make DBG=1 WHAT=cmd/kube-controller-manager"
@@ -175,9 +176,10 @@ start_controller() {
     fi
     echo "🚀 启动 kube-controller-manager ..."
     nohup "${CONTROLLER_BIN}" \
-        --kubeconfig=${DEBUG_DIR}/debug.kubeconfig \
+        --kubeconfig=${KUBECONFIG} \
         --service-account-private-key-file=${DEBUG_DIR}/sa.key \
-        --leader-elect=false -v=4 \
+        --root-ca-file=${DEBUG_DIR}/ca.crt \
+        -v=4 \
         > "${CONTROLLER_LOG}" 2>&1 &
     echo $! > "${CONTROLLER_PID_FILE}"
     echo "✅ kube-controller-manager PID=$(cat ${CONTROLLER_PID_FILE}) 日志=${CONTROLLER_LOG}"
@@ -194,27 +196,74 @@ stop_controller() {
 }
 
 # --------------------------
-# 主逻辑
+# kube-scheduler ✅ 新增部分
+# --------------------------
+start_scheduler() {
+    SCHED_BIN="${ROOT_DIR}/_output/local/go/bin/kube-scheduler"
+    if [ ! -f "${SCHED_BIN}" ]; then
+        echo "❌ 找不到 kube-scheduler，请先 make DBG=1 WHAT=cmd/kube-scheduler"
+        exit 1
+    fi
+    if pgrep -x kube-scheduler >/dev/null 2>&1; then
+        echo "⚠️ kube-scheduler 已在运行"
+        return
+    fi
+    echo "🚀 启动 kube-scheduler ..."
+    nohup "${SCHED_BIN}" \
+        --kubeconfig=${KUBECONFIG} \
+        -v=4 \
+        > "${SCHEDULER_LOG}" 2>&1 &
+    echo $! > "${SCHEDULER_PID_FILE}"
+    echo "✅ kube-scheduler PID=$(cat ${SCHEDULER_PID_FILE}) 日志=${SCHEDULER_LOG}"
+}
+
+stop_scheduler() {
+    if [ -f "${SCHEDULER_PID_FILE}" ]; then
+        kill -9 $(cat ${SCHEDULER_PID_FILE}) || true
+        rm -f "${SCHEDULER_PID_FILE}"
+        echo "🛑 kube-scheduler 已停止"
+    else
+        echo "⚠️ kube-scheduler 未运行"
+    fi
+}
+
+# --------------------------
+# Dispatcher
 # --------------------------
 case "${ACTION}" in
     start)
         case "${COMPONENT}" in
-            all) start_etcd; start_apiserver; start_controller ;;
             etcd) start_etcd ;;
             apiserver) start_apiserver ;;
             controller) start_controller ;;
+            scheduler) start_scheduler ;;
+            all)
+                start_etcd
+                sleep 1
+                start_apiserver
+                sleep 2
+                start_controller
+                start_scheduler
+                ;;
             *) usage ;;
         esac
         ;;
     stop)
         case "${COMPONENT}" in
-            all) stop_controller; stop_apiserver; stop_etcd ;;
             etcd) stop_etcd ;;
             apiserver) stop_apiserver ;;
             controller) stop_controller ;;
+            scheduler) stop_scheduler ;;
+            all)
+                stop_scheduler
+                stop_controller
+                stop_apiserver
+                stop_etcd
+                ;;
             *) usage ;;
         esac
         ;;
-    *) usage ;;
+    *)
+        usage ;;
 esac
 

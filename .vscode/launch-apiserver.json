@@ -5,28 +5,23 @@
       "name": "Debug kube-apiserver",
       "type": "go",
       "request": "launch",
-      "program": "${workspaceFolder}/cmd/kube-apiserver",
+      "mode": "exec",  // 关键：指定 mode 为 exec
+      "program": "${workspaceFolder}/_output/local/go/bin/kube-apiserver",
       "args": [
         "--etcd-servers=http://127.0.0.1:2379",
         "--service-cluster-ip-range=10.0.0.0/24",
-        "--cert-dir=/tmp/kubernetes",
+        "--bind-address=127.0.0.1",
         "--secure-port=6443",
-        "--authorization-mode=RBAC",
-        "--anonymous-auth=true",
+        "--tls-cert-file=/tmp/k8s-debug/server.crt",
+        "--tls-private-key-file=/tmp/k8s-debug/server.key",
+        "--client-ca-file=/tmp/k8s-debug/ca.crt",
+        "--authorization-mode=AlwaysAllow",
+        "--service-account-key-file=/tmp/k8s-debug/sa.key",
+        "--service-account-signing-key-file=/tmp/k8s-debug/sa.key",
+        "--service-account-issuer=https://kubernetes.default.svc",
         "--allow-privileged=true",
-        "--runtime-config=api/all=true",
-        "--disable-admission-plugins=ServiceAccount",
-        "--service-account-key-file=${workspaceFolder}/hack/testdata/ca/ca.key",
-        "--service-account-signing-key-file=${workspaceFolder}/hack/testdata/ca/ca.key",
-        "--service-account-issuer=https://kubernetes.default.svc.cluster.local"
-      ],
-      "cwd": "${workspaceFolder}",
-      "env": {
-        "KUBECONFIG": "/tmp/kubeconfig",
-        "GOROOT": "/usr/local/go",
-        "PATH": "/usr/local/go/bin:${env:PATH}",
-        "GOTOOLCHAIN": "local"
-      }
+        "-v=4"
+      ]
     }
   ]
 }
